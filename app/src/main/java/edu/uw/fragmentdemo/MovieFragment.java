@@ -1,10 +1,14 @@
 package edu.uw.fragmentdemo;
 
+
+import android.content.Context;
 import android.os.AsyncTask;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.app.Fragment;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -24,25 +28,52 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 
-public class MovieActivity extends AppCompatActivity {
+import edu.uw.fragmentdemo.R;
 
-    private static final String TAG = "MovieActivity";
+/**
+ * A simple {@link Fragment} subclass.
+ */
+public class MovieFragment extends Fragment {
 
+    final String TAG = "MovieFragment";
     private ArrayAdapter<Movie> adapter; //adapter for list view
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+    private onMovieSelectionListener callback;
 
-        Button searchButton = (Button)findViewById(R.id.btnSearch);
+    public interface onMovieSelectionListener {
+        public void onFlic(Movie movie);
+
+    }
+
+    public MovieFragment() {
+        // Required empty public constructor
+    }
+
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        try{
+            callback = (onMovieSelectionListener)context;
+        } catch(ClassCastException e) {
+            throw new ClassCastException(context.toString() + " must implement onMovieSelectionListener");
+        }
+
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        final View rootView = inflater.inflate(R.layout.fragment_movie, container, false);
+
+
+        Button searchButton = (Button) rootView.findViewById(R.id.btnSearch);
         searchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Log.i(TAG, "searching...");
 
                 MovieDownloadTask task = new MovieDownloadTask();
-                EditText searchBox = (EditText)findViewById(R.id.txtSearch);
+                EditText searchBox = (EditText) rootView.findViewById(R.id.txtSearch);
                 String searchTerm = searchBox.getText().toString();
                 task.execute(searchTerm);
             }
@@ -54,10 +85,10 @@ public class MovieActivity extends AppCompatActivity {
 
         //controller
         adapter = new ArrayAdapter<Movie>(
-                this, R.layout.list_item, R.id.txtItem, list);
+                getActivity(), R.layout.list_item, R.id.txtItem, list);
 
         //support ListView or GridView
-        AdapterView listView = (AdapterView)findViewById(R.id.listView);
+        AdapterView listView = (AdapterView) rootView.findViewById(R.id.listView);
         listView.setAdapter(adapter);
 
         //respond to item clicking
@@ -67,9 +98,14 @@ public class MovieActivity extends AppCompatActivity {
                 Movie movie = (Movie) parent.getItemAtPosition(position);
                 Log.i(TAG, "selected: " + movie.toString());
 
+                //swap the fragments to show the detail
+                //getActivity().swapFragments();
+                ((onMovieSelectionListener)getActivity()).onFlic(movie);
+
             }
         });
 
+        return rootView;
     }
 
     /**
@@ -173,4 +209,5 @@ public class MovieActivity extends AppCompatActivity {
             return movies;
         }
     }
+
 }
